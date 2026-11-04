@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Подарок для любимой мамы ❤️ Просто так</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Comfortaa:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: 'Comfortaa', cursive, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    .font-handwriting {
+      font-family: 'Caveat', cursive;
+    }
+
+    /* Фоновый плавающий градиент */
+    .bg-animated {
+      background: linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 50%, #fed6e3 100%);
+      background-size: 300% 300%;
+      animation: gradientShift 16s ease infinite;
+    }
+
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    /* Пульсация сердца */
+    @keyframes heartbeat {
+      0% { transform: scale(1); filter: drop-shadow(0 0 15px rgba(255, 75, 110, 0.4)); }
+      14% { transform: scale(1.15); filter: drop-shadow(0 0 28px rgba(255, 75, 110, 0.8)); }
+      28% { transform: scale(1.02); filter: drop-shadow(0 0 18px rgba(255, 75, 110, 0.5)); }
+      42% { transform: scale(1.2); filter: drop-shadow(0 0 32px rgba(255, 75, 110, 0.9)); }
+      70% { transform: scale(1); filter: drop-shadow(0 0 15px rgba(255, 75, 110, 0.4)); }
+    }
+
+    .heart-pulse {
+      animation: heartbeat 2.2s infinite ease-in-out;
+    }
+
+    /* Всплывающие сердечки при нажатии "Обнять" */
+    @keyframes floatUp {
+      0% {
+        opacity: 1;
+        transform: translateY(0) scale(0.6) rotate(0deg);
+      }
+      100% {
+        opacity: 0;
+        transform: translateY(-220px) scale(1.6) rotate(35deg);
+      }
+    }
+
+    .floating-heart {
+      position: absolute;
+      pointer-events: none;
+      animation: floatUp 1.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+      z-index: 50;
+    }
+
+    /* Эффект матового стекла */
+    .glass-card {
+      background: rgba(255, 255, 255, 0.72);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.85);
+      box-shadow: 0 18px 40px -10px rgba(186, 110, 145, 0.25);
+    }
+
+    .glass-input {
+      background: rgba(255, 255, 255, 0.9);
+      border: 1.5px solid rgba(244, 143, 177, 0.6);
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.04);
+    }
+
+    /* Анимация лепестков на заднем плане */
+    #petals-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+    }
+  </style>
+</head>
+<body class="bg-animated min-h-screen text-slate-800 flex items-center justify-center p-3 relative overflow-x-hidden">
+
+  <!-- Холст для фоновых летящих лепестков -->
+  <canvas id="petals-canvas"></canvas>
+
+  <main class="w-full max-w-md relative z-10 py-6">
+
+    <!-- ================= ЭКРАН 1: ЗАМОК С СЕРДЕЧКОМ ================= -->
+    <section id="lock-screen" class="glass-card rounded-3xl p-6 md:p-8 text-center transition-all duration-700 transform flex flex-col items-center">
+      
+      <!-- Пульсирующее сердце -->
+      <div class="relative mb-5 cursor-pointer" onclick="pokeHeart()">
+        <svg class="w-32 h-32 md:w-36 md:h-36 heart-pulse text-rose-500 fill-current" viewBox="0 0 24 24">
+          <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+        </svg>
+        <span class="absolute inset-0 flex items-center justify-center text-white text-3xl font-bold select-none drop-shadow">💌</span>
+      </div>
+
+      <h1 class="text-2xl font-bold text-rose-700 mb-2 leading-tight">
+        Секретное послание для любимой мамы
+      </h1>
+      
+      <p class="text-sm text-slate-600 mb-6 font-medium">
+        Без повода и праздников — просто потому что люблю! Чтобы открыть сюрприз, напиши имя своего любимого сына:
+      </p>
+
+      <!-- Форма ввода имени -->
+      <div class="w-full space-y-4">
+        <div class="relative">
+          <input 
+            type="text" 
+            id="sender-input" 
+            placeholder="Введи имя сына (например: Никита)" 
+            autocomplete="off"
+            class="glass-input w-full px-5 py-4 rounded-2xl text-center text-slate-800 placeholder-slate-400 font-semibold text-lg outline-none focus:ring-4 focus:ring-rose-300/60 transition-all duration-300"
+            onkeypress="if(event.key === 'Enter') checkSecretName()"
+          />
+        </div>
+
+        <!-- Подсказка / Ошибка -->
+        <p id="error-msg" class="text-rose-600 text-sm font-semibold min-h-[22px] transition-opacity duration-300 opacity-0"></p>
+
+        <!-- Кнопка открытия -->
+        <button 
+          id="unlock-btn"
+          onclick="checkSecretName()" 
+          class="w-full py-4 px-6 bg-gradient-to-r from-rose-500 via-pink-500 to-rose-400 hover:from-rose-600 hover:to-pink-600 text-white font-bold text-lg rounded-2xl shadow-lg shadow-rose-300/50 active:scale-95 transition duration-200 flex items-center justify-center gap-2">
+          <span>Открыть подарок ❤️</span>
+        </button>
+      </div>
+
+      <div class="mt-6 text-xs text-slate-500 bg-white/40 py-1.5 px-3 rounded-full border border-white/60">
+        ✨ Маленький сюрприз в обычный день
+      </div>
+    </section>
+
+    <!-- ================= ЭКРАН 2: РАСКРЫТЫЙ ПОДАРОК ================= -->
+    <section id="gift-screen" class="glass-card rounded-3xl p-6 md:p-8 transition-all duration-700 hidden opacity-0 transform translate-y-6">
+      
+      <!-- Заголовок поздравления -->
+      <div class="text-center mb-6">
+        <span class="inline-block px-3 py-1 bg-rose-100 text-rose-700 text-xs font-bold rounded-full mb-2 uppercase tracking-wider">
+          Просто так • Без повода
+        </span>
+        <h2 class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-rose-600 via-pink-600 to-purple-600">
+          Мамуль, это тебе! ❤️
+        </h2>
+        <p class="text-xs text-slate-500 mt-1">Просто потому, что ты самая лучшая мама на свете</p>
+      </div>
+
+      <!-- Фоторамка -->
+      <div class="relative w-full aspect-[4/3] rounded-2xl overflow-hidden mb-6 shadow-inner border-2 border-white/80 bg-rose-50 flex items-center justify-center group">
+        <img 
+          id="family-photo" 
+          src="img/mom.jpg" 
+          alt="Любимая мама" 
+          class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          onerror="this.src='https://placehold.co/600x450/fed7aa/be185d?text=Самая+Лучшая+Мама+%E2%9D%A4%EF%B8%8F'"
+        />
+        <div class="absolute bottom-2 left-2 right-2 bg-black/40 backdrop-blur-md rounded-xl py-1 px-3 text-center text-white text-xs font-light">
+          «Самая красивая мама с огромным и добрым сердцем»
+        </div>
+      </div>
+
+      <!-- Трогательное письмо -->
+      <div class="bg-white/80 rounded-2xl p-5 mb-6 border border-rose-100 shadow-sm relative">
+        <div class="text-2xl text-rose-300 font-serif leading-none absolute top-2 left-3">“</div>
+        <p class="font-handwriting text-2xl text-slate-700 leading-snug px-3 pt-1">
+          Мамуль, ты у меня не просто самая красивая, но и человек с невероятно доброй душой. То, как ты находила людей и собирала помощь для собачьего приюта, спасая хвостиков — это настоящий поступок. Ты огромная молодец, я тобой очень горжусь! Спасибо за твое тепло, заботу и за то, что делаешь этот мир лучше просто тем, что ты есть.
+        </p>
+        <div class="text-right text-rose-500 font-bold font-handwriting text-xl mt-2">
+          С любовью, твой сын <span id="sender-display-name">Никита ❤️</span>
+        </div>
+      </div>
+
+      <!-- Интерактивные модули: Музыка и Обнимашки -->
+      <div class="grid grid-cols-2 gap-3 mb-6">
+        
+        <!-- Кнопка музыки -->
+        <button 
+          id="music-toggle-btn" 
+          onclick="toggleMusic()" 
+          class="flex flex-col items-center justify-center p-3.5 bg-rose-50/90 hover:bg-rose-100/90 rounded-2xl border border-rose-200 transition-all active:scale-95 text-slate-700">
+          <span id="music-icon" class="text-2xl mb-1">🎵</span>
+          <span class="text-xs font-bold" id="music-status">Включить мелодию</span>
+          <span class="text-[10px] text-slate-500">Уютные переливы</span>
+        </button>
+
+        <!-- Кнопка объятий -->
+        <button 
+          id="hug-btn" 
+          onclick="giveHug(event)" 
+          class="flex flex-col items-center justify-center p-3.5 bg-pink-50/90 hover:bg-pink-100/90 rounded-2xl border border-pink-200 transition-all active:scale-95 text-slate-700 relative overflow-hidden">
+          <span class="text-2xl mb-1">🫂</span>
+          <span class="text-xs font-bold">Обнять сына</span>
+          <span class="text-[10px] text-pink-600 font-semibold" id="hug-counter">Обняли: 0 раз</span>
+        </button>
+      </div>
+
+      <!-- Блок: Купоны заботы -->
+      <div class="mb-4">
+        <h3 class="text-sm font-bold text-slate-700 mb-2.5 flex items-center gap-1.5">
+          <span>🎟️</span>
+          <span>Бессрочные купоны заботы от сына:</span>
+        </h3>
+        <p class="text-[11px] text-slate-500 mb-3">Нажми на купон в любой момент, когда захочешь!</p>
+
+        <div class="space-y-2.5" id="coupons-list">
+          <!-- Купон 1 -->
+          <div onclick="activateCoupon(this, 'Мытье посуды')" class="coupon flex items-center justify-between p-3.5 bg-white/70 hover:bg-white rounded-2xl border border-rose-100 shadow-sm cursor-pointer transition-all active:scale-98">
+            <div class="flex items-center gap-3">
+              <span class="text-xl">🧽</span>
+              <div>
+                <p class="text-xs font-bold text-slate-800">Внеплановое мытье всей посуды</p>
+                <p class="text-[10px] text-slate-500">Без просьб и напоминаний</p>
+              </div>
+            </div>
+            <span class="badge text-[11px] bg-rose-100 text-rose-600 px-2.5 py-1 rounded-full font-bold">Использовать</span>
+          </div>
+
+          <!-- Купон 2 -->
+          <div onclick="activateCoupon(this, 'Вкусняшки')" class="coupon flex items-center justify-between p-3.5 bg-white/70 hover:bg-white rounded-2xl border border-rose-100 shadow-sm cursor-pointer transition-all active:scale-98">
+            <div class="flex items-center gap-3">
+              <span class="text-xl">🍰</span>
+              <div>
+                <p class="text-xs font-bold text-slate-800">Поход за любимыми вкусняшками</p>
+                <p class="text-[10px] text-slate-500">Быстро доставлю любимые сладости</p>
+              </div>
+            </div>
+            <span class="badge text-[11px] bg-rose-100 text-rose-600 px-2.5 py-1 rounded-full font-bold">Использовать</span>
+          </div>
+
+          <!-- Купон 3 -->
+          <div onclick="activateCoupon(this, 'Фильм с чаем')" class="coupon flex items-center justify-between p-3.5 bg-white/70 hover:bg-white rounded-2xl border border-rose-100 shadow-sm cursor-pointer transition-all active:scale-98">
+            <div class="flex items-center gap-3">
+              <span class="text-xl">🎬</span>
+              <div>
+                <p class="text-xs font-bold text-slate-800">Уютный вечер с кино и чаем</p>
+                <p class="text-[10px] text-slate-500">Выбираешь любой фильм, я завариваю чай</p>
+              </div>
+            </div>
+            <span class="badge text-[11px] bg-rose-100 text-rose-600 px-2.5 py-1 rounded-full font-bold">Использовать</span>
+          </div>
+
+          <!-- Купон 4 -->
+          <div onclick="activateCoupon(this, 'Посылка')" class="coupon flex items-center justify-between p-3.5 bg-white/70 hover:bg-white rounded-2xl border border-rose-100 shadow-sm cursor-pointer transition-all active:scale-98">
+            <div class="flex items-center gap-3">
+              <span class="text-xl">📦</span>
+              <div>
+                <p class="text-xs font-bold text-slate-800">Лучший подарок от сына</p>
+                <p class="text-[10px] text-slate-500">Что же там внутри?</p>
+              </div>
+            </div>
+            <span class="badge text-[11px] bg-rose-100 text-rose-600 px-2.5 py-1 rounded-full font-bold">Использовать</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Нижняя кнопка возврата/перезапуска -->
+      <div class="text-center pt-2">
+        <button onclick="resetGift()" class="text-xs text-slate-400 hover:text-slate-600 underline">
+          Закрыть замочек обратно
+        </button>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- Сообщение-уведомление для купонов (вместо alert) -->
+  <div id="toast" class="fixed top-6 left-1/2 -translate-x-1/2 bg-slate-900/90 text-white px-5 py-2.5 rounded-full text-xs font-medium backdrop-blur-md shadow-xl transition-all duration-300 opacity-0 pointer-events-none z-50 flex items-center gap-2">
+    <span>💖</span>
+    <span id="toast-text">Купон успешно активирован!</span>
+  </div>
+
+  <script>
+    /* ========================================================
+       1. КОНФИГУРАЦИЯ И ПРОВЕРКА ИМЕНИ
+       ======================================================== */
+    const VALID_NAMES = ['никита', 'никитка', 'никитос', 'сын', 'сынок'];
+    
+    let hugsCount = 0;
+    let audioCtx = null;
+    let isMusicPlaying = false;
+    let musicInterval = null;
+
+    function checkSecretName() {
+      const input = document.getElementById('sender-input');
+      const errorMsg = document.getElementById('error-msg');
+      const val = input.value.trim().toLowerCase();
+
+      if (!val) {
+        showError('Напиши имя, мам! 😊');
+        return;
+      }
+
+      // Проверяем имя
+      if (VALID_NAMES.includes(val)) {
+        errorMsg.classList.add('opacity-0');
+        unlockGift(input.value.trim());
+      } else {
+        showError('Подсказка: твой любимый сын 😉');
+        shakeInput();
+      }
+    }
+
+    function showError(text) {
+      const errorMsg = document.getElementById('error-msg');
+      errorMsg.textContent = text;
+      errorMsg.classList.remove('opacity-0');
+    }
+
+    function shakeInput() {
+      const input = document.getElementById('sender-input');
+      input.classList.add('translate-x-2');
+      setTimeout(() => input.classList.remove('translate-x-2'), 100);
+      setTimeout(() => input.classList.add('-translate-x-2'), 200);
+      setTimeout(() => input.classList.remove('-translate-x-2'), 300);
+    }
+
+    function pokeHeart() {
+      showToast('Введи имя своего сына, чтобы открыть замочек! ❤️');
+    }
+
+    /* ========================================================
+       2. ПЕРЕХОД И САЛЮТ КОНФЕТТИ
+       ======================================================== */
+    function unlockGift(enteredName) {
+      const lockScreen = document.getElementById('lock-screen');
+      const giftScreen = document.getElementById('gift-screen');
+      const senderDisplay = document.getElementById('sender-display-name');
+
+      // Форматируем имя с заглавной буквы
+      const formattedName = enteredName.charAt(0).toUpperCase() + enteredName.slice(1);
+      senderDisplay.textContent = formattedName + ' ❤️';
+
+      // Анимация скрытия замка
+      lockScreen.classList.add('opacity-0', 'scale-90');
+      
+      setTimeout(() => {
+        lockScreen.classList.add('hidden');
+        giftScreen.classList.remove('hidden');
+        
+        // Плавное появление открытки
+        setTimeout(() => {
+          giftScreen.classList.remove('opacity-0', 'translate-y-6');
+          fireGrandConfetti();
+        }, 50);
+      }, 500);
+    }
+
+    function fireGrandConfetti() {
+      const count = 200;
+      const defaults = {
+        origin: { y: 0.7 }
+      };
+
+      function fire(particleRatio, opts) {
+        confetti(Object.assign({}, defaults, opts, {
+          particleCount: Math.floor(count * particleRatio)
+        }));
+      }
+
+      fire(0.25, { spread: 26, startVelocity: 55, colors: ['#ff4b6e', '#ff9a9e', '#fecfef'] });
+      fire(0.2, { spread: 60, colors: ['#a18cd1', '#fbc2eb', '#ffffff'] });
+      fire(0.35, { spread: 100, decay: 0.91, scalar: 0.8 });
+      fire(0.1, { spread: 120, startVelocity: 25, decay: 0.92, scalar: 1.2 });
+      fire(0.1, { spread: 120, startVelocity: 45 });
+    }
+
+    function resetGift() {
+      const lockScreen = document.getElementById('lock-screen');
+      const giftScreen = document.getElementById('gift-screen');
+      
+      giftScreen.classList.add('opacity-0', 'translate-y-6');
+      if (isMusicPlaying) toggleMusic();
+
+      setTimeout(() => {
+        giftScreen.classList.add('hidden');
+        lockScreen.classList.remove('hidden');
+        setTimeout(() => {
+          lockScreen.classList.remove('opacity-0', 'scale-90');
+        }, 50);
+      }, 500);
+    }
+
+    /* ========================================================
+       3. ИНТЕРАКТИВ: СЧЕТЧИК ОБНИМАШЕК
+       ======================================================== */
+    function giveHug(e) {
+      hugsCount++;
+      document.getElementById('hug-counter').textContent = `Обняли: ${hugsCount} раз`;
+
+      // Воспроизвести короткий нежный звук
+      playChimeNote(523.25 + (hugsCount % 5) * 60, 0.25);
+
+      // Создаем летящее сердечко в месте клика
+      const rect = e.currentTarget.getBoundingClientRect();
+      const heart = document.createElement('div');
+      heart.className = 'floating-heart text-2xl';
+      heart.innerHTML = ['💖', '💕', '🌸', '✨', '🥰'][Math.floor(Math.random() * 5)];
+      
+      heart.style.left = `${e.clientX || (rect.left + rect.width / 2)}px`;
+      heart.style.top = `${e.clientY || (rect.top + rect.height / 2)}px`;
+      document.body.appendChild(heart);
+
+      setTimeout(() => heart.remove(), 1800);
+    }
+
+    /* ========================================================
+       4. КУПОНЫ ЗАБОТЫ
+       ======================================================== */
+    function activateCoupon(element, name) {
+      const badge = element.querySelector('.badge');
+      if (badge.textContent === 'Использовано ✔️') {
+        showToast(`Купон «${name}» уже активен! Сын уже выполняет задачу! 😉`);
+        return;
+      }
+      
+      badge.textContent = 'Использовано ✔️';
+      badge.classList.remove('bg-rose-100', 'text-rose-600');
+      badge.classList.add('bg-emerald-100', 'text-emerald-600');
+      element.classList.add('opacity-80', 'bg-emerald-50/40');
+
+      confetti({
+        particleCount: 40,
+        spread: 60,
+        origin: { y: 0.8 }
+      });
+
+      playChimeNote(659.25, 0.3);
+      showToast(`Ура! Купон «${name}» активирован. Твое желание принято к исполнению! 💖`);
+    }
+
+    function showToast(text) {
+      const toast = document.getElementById('toast');
+      const toastText = document.getElementById('toast-text');
+      toastText.textContent = text;
+      toast.classList.remove('opacity-0', 'pointer-events-none');
+      
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'pointer-events-none');
+      }, 3500);
+    }
+
+    /* ========================================================
+       5. ЗВУКОВОЙ СИНТЕЗАТОР (WEB AUDIO API)
+       ======================================================== */
+    function getAudioContext() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      return audioCtx;
+    }
+
+    function playChimeNote(freq, duration = 0.4) {
+      try {
+        const ctx = getAudioContext();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, ctx.currentTime);
+
+        gain.gain.setValueAtTime(0.2, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start();
+        osc.stop(ctx.currentTime + duration);
+      } catch (err) {
+        console.warn('Audio not allowed yet:', err);
+      }
+    }
+
+    // Приятная пентатоническая колыбельная/перелив
+    const melodyScale = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25, 587.33, 659.25];
+    let noteIndex = 0;
+
+    function toggleMusic() {
+      const btn = document.getElementById('music-toggle-btn');
+      const status = document.getElementById('music-status');
+      const icon = document.getElementById('music-icon');
+
+      if (!isMusicPlaying) {
+        getAudioContext();
+        isMusicPlaying = true;
+        status.textContent = 'Остановить музыку';
+        icon.textContent = '✨';
+        btn.classList.add('bg-rose-200/90');
+
+        musicInterval = setInterval(() => {
+          const note = melodyScale[noteIndex % melodyScale.length];
+          playChimeNote(note, 0.6);
+          noteIndex = (noteIndex + (Math.random() > 0.4 ? 1 : 2)) % melodyScale.length;
+        }, 550);
+      } else {
+        isMusicPlaying = false;
+        clearInterval(musicInterval);
+        status.textContent = 'Включить мелодию';
+        icon.textContent = '🎵';
+        btn.classList.remove('bg-rose-200/90');
+      }
+    }
+
+    /* ========================================================
+       6. АНИМИРОВАННЫЕ ЛЕТЯЩИЕ ЛЕПЕСТКИ НА CANVAS
+       ======================================================== */
+    const canvas = document.getElementById('petals-canvas');
+    const ctx = canvas.getContext('2d');
+    let petals = [];
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    class Petal {
+      constructor() {
+        this.reset();
+      }
+      reset() {
+        this.x = Math.random() * canvas.width;
+        this.y = -20;
+        this.size = Math.random() * 9 + 6;
+        this.speedY = Math.random() * 1.2 + 0.6;
+        this.speedX = Math.random() * 1 - 0.5;
+        this.angle = Math.random() * 360;
+        this.spin = Math.random() * 2 - 1;
+        this.alpha = Math.random() * 0.4 + 0.3;
+        this.color = Math.random() > 0.4 ? 'rgba(255, 182, 193, ' : 'rgba(255, 218, 224, ';
+      }
+      update() {
+        this.y += this.speedY;
+        this.x += Math.sin(this.y * 0.01) * 0.8 + this.speedX;
+        this.angle += this.spin;
+        if (this.y > canvas.height + 20) {
+          this.reset();
+        }
+      }
+      draw() {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate((this.angle * Math.PI) / 180);
+        ctx.fillStyle = this.color + this.alpha + ')';
+        ctx.beginPath();
+        ctx.ellipse(0, 0, this.size, this.size / 2, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    for (let i = 0; i < 30; i++) {
+      const p = new Petal();
+      p.y = Math.random() * canvas.height;
+      petals.push(p);
+    }
+
+    function animatePetals() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      petals.forEach(p => {
+        p.update();
+        p.draw();
+      });
+      requestAnimationFrame(animatePetals);
+    }
+
+    window.onload = function() {
+      animatePetals();
+    };
+  </script>
+</body>
+</html>
